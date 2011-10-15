@@ -15,7 +15,7 @@ define('CRON_INTERVAL', 60); // run every hour
  * Example:
  * 
  * array(
- * 		The ID of the list (this is the GUID of the TouchBasePro list)
+ * 		The ID of the list
  * 		'mc_list_id' => 'mc_api_list_id',
  * 		
  * 		The database connection credentials
@@ -23,7 +23,7 @@ define('CRON_INTERVAL', 60); // run every hour
  * 			'host' => 'database.domain.com',
  * 			'username' => 'username_here',
  * 			'password' => 'password_here'
-* 			'database' => 'database_name'
+ * 			'database' => 'database_name'
  * 		),
  * 
  * 		The SQL queries used to extract data
@@ -35,7 +35,26 @@ define('CRON_INTERVAL', 60); // run every hour
  * 			array(
  * 				'city' => 'Johannesburg', 'query' => 'SELECT email_address AS email FROM user_list2 WHERE city_id = 1;'
  * 			)
- * 		)
+ * 		),
+ *
+ *		The following is used to get data of emails of unsubscribers
+ *		'unsub_queries' => array(
+ *			array(
+ *				'city' => 'Cape Town', 
+ *				'query' => 'SELECT email FROM unsubscribers WHERE city_id=7 AND user_id is NULL AND TIMESTAMPDIFF(MINUTE, created_datetime, NOW())+60 < '.CRON_INTERVAL,
+ *				'table' => 'unsubscribers emails'
+ *			),
+ *			array(
+ *				'city' => 'Johannesburg', 
+ *				'query' => 'SELECT email FROM unsubscribers WHERE city_id=1 AND user_id is NULL AND TIMESTAMPDIFF(MINUTE, created_datetime, NOW())+60 < '.CRON_INTERVAL,
+ *				'table' => 'unsubscribers emails'
+ *			),
+ *		),
+ *
+ *		Clear unsubscribers table
+ *		'unsub_clear_query' => array(
+ *			'DELETE FROM unsubscribers WHERE city_id=1 OR city_id = 10'
+ *		)
  * 
  * 
  */ 
@@ -58,6 +77,21 @@ $db_to_mc_connections = array(
 				'city' => 'Johannesburg', 
 				'query' => 'SELECT email_address AS email FROM table2 WHERE city_id = 10 AND TIMESTAMPDIFF(MINUTE,date_created, NOW()) < ' . CRON_INTERVAL,
 				'table' => 'table2')
+		),
+		'unsub_queries' => array(
+			array(
+				'city' => 'Cape Town', 
+				'query' => 'SELECT email FROM unsubscribers WHERE city_id=1 AND user_id is NULL AND TIMESTAMPDIFF(MINUTE, created_datetime, NOW())+60 < '.CRON_INTERVAL,
+				'table' => 'unsubscribers users'
+			),
+			array(
+				'city' => 'Johannesburg', 
+				'query' => 'SELECT email FROM unsubscribers WHERE city_id=10 AND user_id is NULL AND TIMESTAMPDIFF(MINUTE, created_datetime, NOW())+60 < '.CRON_INTERVAL,
+				'table' => 'unsubscribers emails'
+			)
+		),
+		'unsub_clear_query' => array(
+			'DELETE FROM unsubscribers WHERE city_id=1 OR city_id = 10'
 		)
 	),
 	array(
@@ -79,6 +113,21 @@ $db_to_mc_connections = array(
 				'query' => 'SELECT email FROM table1 WHERE city_id = 2 AND TIMESTAMPDIFF(MINUTE,date_created, NOW()) < ' . CRON_INTERVAL, 
 				'table' => 'table1'
 			)
+		),
+		'unsub_queries' => array(
+			array(
+				'city' => 'Cape Town', 
+				'query' => 'SELECT email FROM unsubscribers WHERE city_id=1 AND user_id is NULL AND TIMESTAMPDIFF(MINUTE, created_datetime, NOW())+60 < '.CRON_INTERVAL,
+				'table' => 'unsubscribers users'
+			),
+			array(
+				'city' => 'Johannesburg', 
+				'query' => 'SELECT email FROM unsubscribers WHERE city_id=10 AND user_id is NULL AND TIMESTAMPDIFF(MINUTE, created_datetime, NOW())+60 < '.CRON_INTERVAL,
+				'table' => 'unsubscribers emails'
+			)
+		),
+		'unsub_clear_query' => array(
+			'DELETE FROM unsubscribers WHERE city_id=1 OR city_id = 10'
 		)
 	)
 );

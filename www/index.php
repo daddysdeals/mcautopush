@@ -16,6 +16,66 @@ foreach($db_to_mc_connections as $conn) {
 	
 	// create a new database connection for each connection defined in config.php
 	$db = new Db($conn['connection']['host'], $conn['connection']['username'], $conn['connection']['password'], $conn['connection']['database']);
+
+
+
+	// loop through the unsubscribes-checking queries defined for each connection
+	foreach($conn['unsub_queries'] as $query) {
+		// run each query and load the data from the tables		
+		$rows = $db->getData($query['query']);
+		
+		// log the import operation
+		$log_data = array(
+			'database' => $conn['connection']['database'],
+			'table' => $query['table'],
+			'city' => $query['city']
+		);
+		$log_db->insertData($db_log_connection['log_import_query'], $log_data);
+		$import_id = $log_db->getLastInsertedId();
+		
+		// loop through the unsubscribers
+		foreach($rows as $row) {
+			$importStatus = 1;
+			$mcSubscriberId = '';
+			
+			try {
+
+				//get ID for logging
+				$res = $api->listMemberInfo($conn['mc_list_id'], $row[EMAIL_FIELD]);
+
+				$mcSubscriberId = $res['data'][0]['id'];
+
+				//unsubscribing them
+				$mInfo = $api->listUnsubscribe($conn['mc_list_id'], $row[EMAIL_FIELD], $delete_member=false, $send_goodbye=false, $send_notify=false);
+
+
+				if ($mInfo) {
+					$importStatus = 1;
+				} else {
+					//error
+					$importStatus = $api->errorCode;
+				}
+			} catch(Exception $e) {
+				$importStatus = 97;
+			}
+
+			// log the subscriber import (unsubscribing) operation
+			$subscriberData = array(
+				'import_id' => $import_id,
+				'email' => $row[EMAIL_FIELD], 
+				'import_status' => '-'.$importStatus, //negative for unsubscribers
+				'mc_subscriber_id' => $mcSubscriberId
+			);
+			$log_db->insertData($db_log_connection['log_subscriber_import_query'], $subscriberData);
+		}		
+	}
+
+	foreach($conn['unsub_clear_query'] as $query) {
+
+		$db->getData($query);
+	}
+
+
 	
 	// loop through the queries defined for each connection
 	foreach($conn['queries'] as $query) {
